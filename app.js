@@ -1,4 +1,4 @@
-/* Breathe-Easy Returns & Issues — v7 multi-view shell + official brand */
+/* Breathe-Easy Returns & Issues — v8 auth groups + official brand */
 const TECH_ORDER = ['Matthew', 'Tiago', 'Nick', 'Alun', 'Iggi', 'Josh'];
 const TECH_COLORS = { Matthew: '#2563eb', Tiago: '#0ea5e9', Nick: '#22c55e', Alun: '#a855f7', Iggi: '#f97316', Josh: '#8aa0b8' };
 
@@ -157,10 +157,8 @@ function buildMonthChips() {
   });
 }
 
-/* Primary top menu views — add new entries here when shipping more views */
 const VIEWS = [
   { id: 'returns', label: 'Returns', hash: '#/returns' }
-  // { id: 'costs', label: 'Costs', hash: '#/costs' },
 ];
 
 function setTopMenu(viewId) {
@@ -174,12 +172,53 @@ function setTopMenu(viewId) {
   });
 }
 
+function getPerms() {
+  const a = window.BE_AUTH;
+  if (a && a.currentPerms) return a.currentPerms;
+  return {
+    label: 'Admin',
+    canViewTeam: true,
+    canViewAllTechs: true,
+    canViewCosts: true,
+    canViewIssueLog: true
+  };
+}
+
+function getSelfTech() {
+  return (window.BE_AUTH && window.BE_AUTH.currentTech) || null;
+}
+
+function applyPermissions() {
+  const p = getPerms();
+  const log = $('issue-log-card');
+  if (log) log.style.display = p.canViewIssueLog ? '' : 'none';
+  if (DATA) onRoute();
+}
+window.applyPermissions = applyPermissions;
+
 function setCrewNav(route) {
   activeRoute = route;
-  const crew = [
-    { id: 'team', label: 'Full Team' },
-    ...TECH_ORDER.filter(t => (DATA.technicians || []).includes(t)).map(t => ({ id: 'tech:' + t, label: t }))
-  ];
+  const p = getPerms();
+  const self = getSelfTech();
+  let crew = [];
+
+  if (p.selfOnly && self) {
+    crew = [{ id: 'tech:' + self, label: self }];
+    if (route !== 'tech:' + self) {
+      location.hash = '#/returns/tech/' + self;
+      return;
+    }
+  } else {
+    if (p.canViewTeam) crew.push({ id: 'team', label: 'Full Team' });
+    if (p.canViewAllTechs) {
+      TECH_ORDER.filter(t => (DATA.technicians || []).includes(t)).forEach(t => {
+        crew.push({ id: 'tech:' + t, label: t });
+      });
+    } else if (self) {
+      crew.push({ id: 'tech:' + self, label: self });
+    }
+  }
+
   const el = $('nav-links');
   if (!el) return;
   el.innerHTML = crew.map(c => {
@@ -220,14 +259,27 @@ function parseRoute() {
 }
 
 function onRoute() {
-  const { view, crew } = parseRoute();
+  const p = getPerms();
+  const self = getSelfTech();
+  let { view, crew } = parseRoute();
+
+  if (p.selfOnly && self) {
+    crew = 'tech:' + self;
+  }
+  if (crew === 'team' && !p.canViewTeam) {
+    if (self) crew = 'tech:' + self;
+    else if (p.canViewAllTechs && TECH_ORDER.length) crew = 'tech:' + TECH_ORDER[0];
+  }
+  if (crew.startsWith('tech:') && !p.canViewAllTechs && self && crew !== 'tech:' + self) {
+    crew = 'tech:' + self;
+  }
+
   setTopMenu(view);
   if (view === 'returns') {
     setCrewNav(crew);
     if (crew === 'team') renderTeam();
     else if (crew.startsWith('tech:')) renderTech(crew.split(':')[1]);
   }
-  // else if (view === 'costs') renderCosts();
   window.scrollTo(0, 0);
 }
 
@@ -254,16 +306,18 @@ function renderKPIs(list, el, tech) {
     const s = renderKPIsFromSummary(tech);
     total = s.total; fault = s.fault; cost = s.cost; opp = s.opp; cats = s.cats;
   }
+  const showCosts = getPerms().canViewCosts;
   el.innerHTML = `
     <div class="kpi accent"><div class="label">Issues</div><div class="value">${fmt(total)}</div></div>
     <div class="kpi danger"><div class="label">Fault</div><div class="value">${fmt(fault)}</div><div class="sub">${total ? fmt(fault / total * 100, 0) + '% of issues' : ''}</div></div>
-    <div class="kpi warm"><div class="label">Upfront Cost</div><div class="value">${fmtMoney(cost)}</div></div>
-    <div class="kpi teal"><div class="label">Opp. Cost</div><div class="value">${fmtMoney(opp)}</div></div>
+    ${showCosts ? `<div class="kpi warm"><div class="label">Upfront Cost</div><div class="value">${fmtMoney(cost)}</div></div>
+    <div class="kpi teal"><div class="label">Opp. Cost</div><div class="value">${fmtMoney(opp)}</div></div>` : ''}
     <div class="kpi blue"><div class="label">Categories</div><div class="value">${fmt(cats)}</div></div>`;
 }
 
 function renderContribution(list, el) {
   const by = {};
+  const showCosts = getPerms().canViewCosts;
   TECH_ORDER.forEach(t => { by[t] = { n: 0, cost: 0 }; });
   if (hasRecords()) {
     list.forEach(r => {
@@ -282,7 +336,7 @@ function renderContribution(list, el) {
       <div class="contrib-name t-${t}">${t}</div>
       <div class="contrib-bar-track"><div class="contrib-bar-fill bar-${t}" style="width:${pct}%"></div></div>
       <div class="contrib-count">${fmt(by[t].n)}</div>
-      <div class="contrib-cost">${fmtMoney(by[t].cost)}</div></div>`;
+      ${showCosts ? `<div class="contrib-cost">${fmtMoney(by[t].cost)}</div>` : '<div class="contrib-cost"></div>'}</div>`;
   }).join('') || '<div class="empty">No issues in this range</div>';
 }
 
@@ -450,11 +504,17 @@ async function startDashboard() {
   });
 
   window.addEventListener('hashchange', onRoute);
-  if (!location.hash || location.hash === '#/' || location.hash === '#') {
+  const p = getPerms();
+  const self = getSelfTech();
+  if (p.selfOnly && self) {
+    location.hash = '#/returns/tech/' + self;
+  } else if (!location.hash || location.hash === '#/' || location.hash === '#') {
     location.hash = '#/returns';
   }
   onRoute();
+  applyPermissions();
   $('app-root').style.display = 'block';
-  $('auth-gate').style.display = 'none';
+  const gate = $('auth-gate');
+  if (gate) gate.style.display = 'none';
 }
 window.startDashboard = startDashboard;
