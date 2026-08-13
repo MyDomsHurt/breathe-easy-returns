@@ -1,4 +1,4 @@
-/* Breathe-Easy Returns & Issues — v6 official brand guidelines */
+/* Breathe-Easy Returns & Issues — v7 multi-view shell + official brand */
 const TECH_ORDER = ['Matthew', 'Tiago', 'Nick', 'Alun', 'Iggi', 'Josh'];
 const TECH_COLORS = { Matthew: '#2563eb', Tiago: '#0ea5e9', Nick: '#22c55e', Alun: '#a855f7', Iggi: '#f97316', Josh: '#8aa0b8' };
 
@@ -157,37 +157,82 @@ function buildMonthChips() {
   });
 }
 
-function setNav(route) {
+/* Primary top menu views — add new entries here when shipping more views */
+const VIEWS = [
+  { id: 'returns', label: 'Returns', hash: '#/returns' }
+  // { id: 'costs', label: 'Costs', hash: '#/costs' },
+];
+
+function setTopMenu(viewId) {
+  document.querySelectorAll('.top-menu-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === viewId);
+  });
+  document.querySelectorAll('.app-view').forEach(sec => {
+    const match = sec.dataset.view === viewId;
+    if (match) sec.removeAttribute('hidden');
+    else sec.setAttribute('hidden', '');
+  });
+}
+
+function setCrewNav(route) {
   activeRoute = route;
   const crew = [
     { id: 'team', label: 'Full Team' },
     ...TECH_ORDER.filter(t => (DATA.technicians || []).includes(t)).map(t => ({ id: 'tech:' + t, label: t }))
   ];
-  $('nav-links').innerHTML = crew.map(c => {
+  const el = $('nav-links');
+  if (!el) return;
+  el.innerHTML = crew.map(c => {
     const active = route === c.id ? ' active' : '';
-    return `<button class="nav-btn${active}" data-route="${c.id}">${c.label}</button>`;
+    return `<button type="button" class="nav-btn${active}" data-route="${c.id}">${c.label}</button>`;
   }).join('');
-  document.querySelectorAll('.nav-btn').forEach(btn => {
+  el.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => {
       const r = btn.dataset.route;
-      location.hash = r === 'team' ? '#/team' : `#/tech/${r.split(':')[1]}`;
+      location.hash = r === 'team' ? '#/returns' : `#/returns/tech/${r.split(':')[1]}`;
     };
   });
 }
+
 function parseRoute() {
-  const h = (location.hash || '#/team').replace(/^#\/?/, '');
-  if (h.startsWith('tech/')) {
+  const h = (location.hash || '#/returns').replace(/^#\/?/, '');
+  let view = 'returns';
+  let crew = 'team';
+  if (h.startsWith('returns')) {
+    view = 'returns';
+    const rest = h.slice('returns'.length).replace(/^\//, '');
+    if (rest.startsWith('tech/')) {
+      const name = rest.slice(5);
+      if (TECH_ORDER.includes(name)) crew = 'tech:' + name;
+    }
+  } else if (h.startsWith('tech/')) {
+    view = 'returns';
     const name = h.slice(5);
-    if (TECH_ORDER.includes(name)) return 'tech:' + name;
+    if (TECH_ORDER.includes(name)) crew = 'tech:' + name;
+  } else if (h === 'team' || h === '') {
+    view = 'returns';
+    crew = 'team';
+  } else {
+    const known = VIEWS.find(v => h === v.id || h.startsWith(v.id + '/'));
+    if (known) view = known.id;
   }
-  return 'team';
+  return { view, crew };
 }
-function onRoute() { setNav(parseRoute()); render(); window.scrollTo(0, 0); }
+
+function onRoute() {
+  const { view, crew } = parseRoute();
+  setTopMenu(view);
+  if (view === 'returns') {
+    setCrewNav(crew);
+    if (crew === 'team') renderTeam();
+    else if (crew.startsWith('tech:')) renderTech(crew.split(':')[1]);
+  }
+  // else if (view === 'costs') renderCosts();
+  window.scrollTo(0, 0);
+}
+
 function render() {
-  const route = parseRoute();
-  activeRoute = route;
-  if (route === 'team') renderTeam();
-  else if (route.startsWith('tech:')) renderTech(route.split(':')[1]);
+  onRoute();
 }
 
 function renderKPIsFromSummary(tech) {
@@ -395,7 +440,19 @@ async function startDashboard() {
   }
   $('btnAll').classList.add('active');
   updateDateDesc();
+
+  document.querySelectorAll('.top-menu-btn').forEach(btn => {
+    btn.onclick = () => {
+      const v = btn.dataset.view;
+      const def = VIEWS.find(x => x.id === v);
+      location.hash = def ? def.hash : '#/' + v;
+    };
+  });
+
   window.addEventListener('hashchange', onRoute);
+  if (!location.hash || location.hash === '#/' || location.hash === '#') {
+    location.hash = '#/returns';
+  }
   onRoute();
   $('app-root').style.display = 'block';
   $('auth-gate').style.display = 'none';
