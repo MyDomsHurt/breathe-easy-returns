@@ -8,14 +8,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
 
 <div id="auth-gate">
   <div class="auth-card">
     <div class="logo-mark">
-      <!-- Simplified snowflake / air mark aligned to brand logo -->
       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="26" height="26">
         <path d="M12 2v20M12 2l3.5 3.5M12 2L8.5 5.5M12 22l3.5-3.5M12 22l-3.5-3.5"/>
         <path d="M4.2 6.5l15.6 11M4.2 6.5l2.2 4.2M4.2 6.5l4.2-1.5M19.8 17.5l-2.2-4.2M19.8 17.5l-4.2 1.5"/>
@@ -33,109 +32,136 @@
 </div>
 
 <div id="app-root">
+  <!-- Primary top menu — add more views here -->
+  <nav class="topbar" id="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#/returns" aria-label="Breathe-Easy home">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M12 2l3.5 3.5M12 2L8.5 5.5M12 22l3.5-3.5M12 22l-3.5-3.5"/>
+            <path d="M4.2 6.5l15.6 11M4.2 6.5l2.2 4.2M4.2 6.5l4.2-1.5M19.8 17.5l-2.2-4.2M19.8 17.5l-4.2 1.5"/>
+            <path d="M19.8 6.5l-15.6 11M19.8 6.5l-2.2 4.2M19.8 6.5l-4.2-1.5M4.2 17.5l2.2-4.2M4.2 17.5l4.2 1.5"/>
+            <circle cx="12" cy="12" r="2.2" fill="white" stroke="none"/>
+          </svg>
+        </span>
+        <span class="brand-text">Breathe<span>-Easy</span></span>
+      </a>
+
+      <div class="top-menu" id="top-menu" role="menubar">
+        <button type="button" class="top-menu-btn active" data-view="returns" role="menuitem">Returns</button>
+        <!-- Future views: add buttons here, e.g.
+        <button type="button" class="top-menu-btn" data-view="costs" role="menuitem">Costs</button>
+        -->
+      </div>
+
+      <div class="topbar-right">
+        <span id="auth-user" class="auth-user">Local preview</span>
+        <button type="button" class="topbar-reload" onclick="location.reload()">Reload</button>
+      </div>
+    </div>
+  </nav>
+
   <div class="container">
-    <div class="auth-bar">
-      <span id="auth-user">Local preview</span>
-      <button type="button" onclick="location.reload()">Reload</button>
-    </div>
 
-    <header>
-      <div class="logo-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2v20M12 2l3.5 3.5M12 2L8.5 5.5M12 22l3.5-3.5M12 22l-3.5-3.5"/>
-          <path d="M4.2 6.5l15.6 11M4.2 6.5l2.2 4.2M4.2 6.5l4.2-1.5M19.8 17.5l-2.2-4.2M19.8 17.5l-4.2 1.5"/>
-          <path d="M19.8 6.5l-15.6 11M19.8 6.5l-2.2 4.2M19.8 6.5l-4.2-1.5M4.2 17.5l2.2-4.2M4.2 17.5l4.2 1.5"/>
-          <circle cx="12" cy="12" r="2.2" fill="white" stroke="none"/>
-        </svg>
-      </div>
-      <h1>Breathe <span>Easy</span></h1>
-      <div class="subtitle">Returns & Issues · technician quality</div>
-    </header>
+    <!-- VIEW: Returns -->
+    <section id="view-returns" class="app-view" data-view="returns">
 
-    <div class="nav" id="nav-links"></div>
-
-    <div class="date-card">
-      <h2>Date range</h2>
-      <div class="desc" id="date-desc">Filter by issue created date</div>
-
-      <div class="period-row" id="period-row">
-        <button type="button" class="period-btn active" data-period="all" id="btnAll">All time</button>
-        <button type="button" class="period-btn" data-period="30" id="btn30">Last 30 days</button>
-        <button type="button" class="period-btn" data-period="90" id="btn90">Last 90 days</button>
-        <button type="button" class="period-btn" data-period="ytd" id="btnYTD">2026</button>
-        <button type="button" class="period-btn" data-period="custom" id="btnCustom">Custom</button>
+      <div class="view-header">
+        <h1 class="view-title">Returns &amp; Issues</h1>
+        <p class="view-sub">Technician quality · issues caused and costs</p>
       </div>
 
-      <div class="month-row" id="month-row"></div>
+      <!-- Secondary: crew filter -->
+      <div class="crew-nav" id="nav-links"></div>
 
-      <div class="custom-row" id="custom-row" hidden>
-        <div class="date-field"><label>From</label><input type="date" id="dateStart" /></div>
-        <div class="date-field"><label>To</label><input type="date" id="dateEnd" /></div>
-        <button type="button" class="date-btn" id="btnApply">Apply</button>
+      <div class="date-card">
+        <h2>Date range</h2>
+        <div class="desc" id="date-desc">Filter by issue created date</div>
+
+        <div class="period-row" id="period-row">
+          <button type="button" class="period-btn active" data-period="all" id="btnAll">All time</button>
+          <button type="button" class="period-btn" data-period="30" id="btn30">Last 30 days</button>
+          <button type="button" class="period-btn" data-period="90" id="btn90">Last 90 days</button>
+          <button type="button" class="period-btn" data-period="ytd" id="btnYTD">2026</button>
+          <button type="button" class="period-btn" data-period="custom" id="btnCustom">Custom</button>
+        </div>
+
+        <div class="month-row" id="month-row"></div>
+
+        <div class="custom-row" id="custom-row" hidden>
+          <div class="date-field"><label>From</label><input type="date" id="dateStart" /></div>
+          <div class="date-field"><label>To</label><input type="date" id="dateEnd" /></div>
+          <button type="button" class="date-btn" id="btnApply">Apply</button>
+        </div>
       </div>
-    </div>
 
-    <div style="margin-bottom:16px">
-      <h2 id="page-title" style="font-size:1.25rem;font-weight:800;letter-spacing:-0.02em">Full Team</h2>
-      <div id="page-sub" class="subtitle" style="font-size:0.9rem">All technician issues & returns</div>
-    </div>
+      <div style="margin-bottom:16px">
+        <h2 id="page-title" style="font-size:1.25rem;font-weight:800;letter-spacing:-0.02em">Full Team</h2>
+        <div id="page-sub" class="subtitle" style="font-size:0.9rem">All technician issues & returns</div>
+      </div>
 
-    <div class="kpi-row" id="kpi-row"></div>
+      <div class="kpi-row" id="kpi-row"></div>
 
-    <div id="team-only">
+      <div id="team-only">
+        <div class="card">
+          <h2>Contribution by technician</h2>
+          <div class="desc">Issue count and upfront cost in the selected range. Ranked by volume.</div>
+          <div class="contrib-list" id="contrib-list"></div>
+        </div>
+      </div>
+
+      <div id="tech-only" style="display:none">
+        <div class="card">
+          <h2><span id="tech-name-label"></span> · issue mix</h2>
+          <div class="desc">Category and type breakdown for this technician only.</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <h2>By category</h2>
+          <div class="desc">Primary issue category.</div>
+          <div class="cat-grid" id="cat-grid"></div>
+        </div>
+        <div class="card">
+          <h2>By type</h2>
+          <div class="desc">Return Visit / Checklist / Fault status.</div>
+          <div id="type-table"></div>
+        </div>
+      </div>
+
       <div class="card">
-        <h2>Contribution by technician</h2>
-        <div class="desc">Issue count and upfront cost in the selected range. Ranked by volume.</div>
-        <div class="contrib-list" id="contrib-list"></div>
+        <h2>Issues over time</h2>
+        <div class="desc">Monthly volume · all issues vs fault.</div>
+        <div id="timeline-chart" class="chart"></div>
       </div>
-    </div>
 
-    <div id="tech-only" style="display:none">
       <div class="card">
-        <h2><span id="tech-name-label"></span> · issue mix</h2>
-        <div class="desc">Category and type breakdown for this technician only.</div>
+        <h2>Category share</h2>
+        <div class="desc">Ranked by volume in the selected range.</div>
+        <div id="cat-pie" style="width:100%; min-height:320px;"></div>
       </div>
-    </div>
 
-    <div class="two-col">
-      <div class="card">
-        <h2>By category</h2>
-        <div class="desc">Primary issue category.</div>
-        <div class="cat-grid" id="cat-grid"></div>
+      <!-- Issue log kept for later — currently hidden -->
+      <div class="card" id="issue-log-card" style="display:none">
+        <h2>Issue log</h2>
+        <div class="desc">Most recent issues in range. Phones removed.</div>
+        <div id="issue-table" style="overflow-x:auto"></div>
       </div>
-      <div class="card">
-        <h2>By type</h2>
-        <div class="desc">Return Visit / Checklist / Fault status.</div>
-        <div id="type-table"></div>
+
+      <div class="note">
+        Source: Technicians Returns & Costs · cleaned 2026-08-13 · 205 records · phones removed for privacy.
       </div>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2>Issues over time</h2>
-      <div class="desc">Monthly volume · all issues vs fault.</div>
-      <div id="timeline-chart" class="chart"></div>
-    </div>
+    <!-- Future views go here, e.g.
+    <section id="view-costs" class="app-view" data-view="costs" hidden>…</section>
+    -->
 
-    <div class="card">
-      <h2>Category share</h2>
-      <div class="desc">Ranked by volume in the selected range.</div>
-      <div id="cat-pie" style="width:100%; min-height:320px;"></div>
-    </div>
-
-    <!-- Issue log kept for later — currently hidden -->
-    <div class="card" id="issue-log-card" style="display:none">
-      <h2>Issue log</h2>
-      <div class="desc">Most recent issues in range. Phones removed.</div>
-      <div id="issue-table" style="overflow-x:auto"></div>
-    </div>
-
-    <div class="note">
-      Source: Technicians Returns & Costs · cleaned 2026-08-13 · 205 records · phones removed for privacy.
-    </div>
   </div>
 </div>
 
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
 <script>
   if (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:') {
     startDashboard();
