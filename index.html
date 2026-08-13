@@ -7,11 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
 
-<!-- Auth gate (Firebase wired later; local preview auto-starts) -->
 <div id="auth-gate">
   <div class="auth-card">
     <div class="logo-mark">
@@ -21,7 +20,7 @@
       </svg>
     </div>
     <h1>Breathe <span>Easy</span></h1>
-    <p>Returns &amp; Issues dashboard. Sign in with your Google account.</p>
+    <p>Returns & Issues dashboard. Sign in with your Google account.</p>
     <button type="button" id="btn-google" class="btn-google" onclick="window.startDashboard && startDashboard()">
       Open dashboard
     </button>
@@ -44,12 +43,11 @@
         </svg>
       </div>
       <h1>Breathe <span>Easy</span></h1>
-      <div class="subtitle">Returns &amp; Issues · technician quality</div>
+      <div class="subtitle">Returns & Issues · technician quality</div>
     </header>
 
     <div class="nav" id="nav-links"></div>
 
-    <!-- Date range (global) -->
     <div class="date-card">
       <h2>Date range</h2>
       <div class="desc">Filter by issue created date.</div>
@@ -63,16 +61,13 @@
       </div>
     </div>
 
-    <!-- Page header -->
     <div style="margin-bottom:16px">
       <h2 id="page-title" style="font-size:1.25rem;font-weight:800;letter-spacing:-0.02em">Full Team</h2>
-      <div id="page-sub" class="subtitle" style="font-size:0.9rem">All technician issues &amp; returns</div>
+      <div id="page-sub" class="subtitle" style="font-size:0.9rem">All technician issues & returns</div>
     </div>
 
-    <!-- KPIs — stats first -->
     <div class="kpi-row" id="kpi-row"></div>
 
-    <!-- Team contribution (team page only) -->
     <div id="team-only">
       <div class="card">
         <h2>Contribution by technician</h2>
@@ -101,17 +96,16 @@
       </div>
     </div>
 
-    <div class="two-col">
-      <div class="card">
-        <h2>Issues over time</h2>
-        <div class="desc">Monthly volume · all issues vs fault.</div>
-        <div id="timeline-chart" class="chart"></div>
-      </div>
-      <div class="card">
-        <h2>Category share</h2>
-        <div class="desc">Distribution in selected range.</div>
-        <div id="cat-pie" class="chart-sm"></div>
-      </div>
+    <div class="card">
+      <h2>Issues over time</h2>
+      <div class="desc">Monthly volume · all issues vs fault.</div>
+      <div id="timeline-chart" class="chart"></div>
+    </div>
+
+    <div class="card">
+      <h2>Category share</h2>
+      <div class="desc">Ranked by volume in the selected range.</div>
+      <div id="cat-pie" style="width:100%; min-height:320px;"></div>
     </div>
 
     <div class="card">
@@ -121,19 +115,16 @@
     </div>
 
     <div class="note">
-      Source: Technicians Returns &amp; Costs · cleaned 2026-08-13 · 205 records · phones removed for privacy.
+      Source: Technicians Returns & Costs · cleaned 2026-08-13 · 205 records · phones removed for privacy.
     </div>
   </div>
 </div>
 
-<script src="app.js?v=1"></script>
+<script src="app.js?v=2"></script>
 <script>
-  // Local preview: auto-open after short delay so structure is visible
-  // Production: replace with Firebase auth gate calling startDashboard()
   if (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:') {
     startDashboard();
   } else {
-    // Still allow open button for GitHub Pages until auth is wired
     document.getElementById('btn-google').addEventListener('click', () => startDashboard());
   }
 </script>
