@@ -31,10 +31,10 @@ function fmtMoney(n) {
 async function loadData() {
   const res = await fetch('data.json');
   DATA = await res.json();
+  if (!DATA.records) DATA.records = [];
 }
 
 function inRange(rec) {
-  // No date bounds \u2192 include everything (even undated rows)
   if (!rangeStart && !rangeEnd) return true;
   if (!rec.created) return false;
   if (rangeStart && rec.created < rangeStart) return false;
@@ -43,9 +43,13 @@ function inRange(rec) {
 }
 
 function filtered(tech = null) {
-  let list = DATA.records.filter(inRange);
+  let list = (DATA.records || []).filter(inRange);
   if (tech) list = list.filter(r => r.technician === tech);
   return list;
+}
+
+function hasRecords() {
+  return (DATA.records || []).length > 0;
 }
 
 function setRange(start, end, activeBtn) {
@@ -82,12 +86,11 @@ function presetYTD() {
   setRange('2026-01-01', end, 'btnYTD');
 }
 
-/* ---------- Routing ---------- */
 function setNav(route) {
   activeRoute = route;
   const crew = [
     { id: 'team', label: 'Full Team' },
-    ...TECH_ORDER.filter(t => DATA.technicians.includes(t)).map(t => ({ id: 'tech:' + t, label: t }))
+    ...TECH_ORDER.filter(t => (DATA.technicians || []).includes(t)).map(t => ({ id: 'tech:' + t, label: t }))
   ];
   $('nav-links').innerHTML = crew.map(c => {
     const active = route === c.id ? ' active' : '';
@@ -117,7 +120,6 @@ function onRoute() {
   window.scrollTo(0, 0);
 }
 
-/* ---------- Render ---------- */
 function render() {
   const route = parseRoute();
   activeRoute = route;
@@ -125,13 +127,33 @@ function render() {
   else if (route.startsWith('tech:')) renderTech(route.split(':')[1]);
 }
 
-function renderKPIs(list, el) {
-  const total = list.length;
-  const fault = list.filter(r => r.is_fault).length;
-  const cost = list.reduce((s, r) => s + (r.upfront_cost || 0), 0);
-  const opp = list.reduce((s, r) => s + (r.opportunity_cost || 0), 0);
-  const cats = new Set(list.map(r => r.category)).size;
+function renderKPIsFromSummary(tech) {
+  if (tech && DATA.by_tech && DATA.by_tech[tech]) {
+    const s = DATA.by_tech[tech];
+    const cats = Object.keys(s.categories || {}).length;
+    return { total: s.total, fault: s.fault, cost: s.upfront_cost, opp: s.opportunity_cost || 0, cats };
+  }
+  return {
+    total: DATA.total || 0,
+    fault: DATA.fault || 0,
+    cost: DATA.upfront_cost || 0,
+    opp: DATA.opportunity_cost || 0,
+    cats: Object.keys(DATA.categories || {}).length
+  };
+}
 
+function renderKPIs(list, el, tech) {
+  let total, fault, cost, opp, cats;
+  if (hasRecords()) {
+    total = list.length;
+    fault = list.filter(r => r.is_fault).length;
+    cost = list.reduce((s, r) => s + (r.upfront_cost || 0), 0);
+    opp = list.reduce((s, r) => s + (r.opportunity_cost || 0), 0);
+    cats = new Set(list.map(r => r.category)).size;
+  } else {
+    const s = renderKPIsFromSummary(tech);
+    total = s.total; fault = s.fault; cost = s.cost; opp = s.opp; cats = s.cats;
+  }
   el.innerHTML = `
     <div class="kpi accent"><div class="label">Issues</div><div class="value">${fmt(total)}</div></div>
     <div class="kpi danger"><div class="label">Fault</div><div class="value">${fmt(fault)}</div><div class="sub">${total ? fmt(fault / total * 100, 0) + '% of issues' : ''}</div></div>
@@ -144,11 +166,17 @@ function renderKPIs(list, el) {
 function renderContribution(list, el) {
   const by = {};
   TECH_ORDER.forEach(t => { by[t] = { n: 0, cost: 0 }; });
-  list.forEach(r => {
-    if (!by[r.technician]) by[r.technician] = { n: 0, cost: 0 };
-    by[r.technician].n++;
-    by[r.technician].cost += r.upfront_cost || 0;
-  });
+  if (hasRecords()) {
+    list.forEach(r => {
+      if (!by[r.technician]) by[r.technician] = { n: 0, cost: 0 };
+      by[r.technician].n++;
+      by[r.technician].cost += r.upfront_cost || 0;
+    });
+  } else if (DATA.by_tech) {
+    Object.entries(DATA.by_tech).forEach(([t, s]) => {
+      by[t] = { n: s.total || 0, cost: s.upfront_cost || 0 };
+    });
+  }
   const max = Math.max(1, ...Object.values(by).map(x => x.n));
   const sorted = TECH_ORDER.filter(t => by[t] && by[t].n > 0)
     .sort((a, b) => by[b].n - by[a].n);
@@ -165,12 +193,18 @@ function renderContribution(list, el) {
   }).join('') || '<div class="empty">No issues in this range</div>';
 }
 
-function renderCategories(list, el) {
-  const counts = {};
-  list.forEach(r => {
-    const c = r.category || 'Unknown';
-    counts[c] = (counts[c] || 0) + 1;
-  });
+function renderCategories(list, el, tech) {
+  let counts = {};
+  if (hasRecords()) {
+    list.forEach(r => {
+      const c = r.category || 'Unknown';
+      counts[c] = (counts[c] || 0) + 1;
+    });
+  } else if (tech && DATA.by_tech && DATA.by_tech[tech]) {
+    counts = DATA.by_tech[tech].categories || {};
+  } else {
+    counts = DATA.categories || {};
+  }
   const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   el.innerHTML = sorted.map(([name, n]) => `
     <div class="cat-chip">
@@ -179,13 +213,19 @@ function renderCategories(list, el) {
     </div>`).join('') || '<div class="empty">No data</div>';
 }
 
-function renderTypeTable(list, el) {
-  const counts = {};
-  list.forEach(r => {
-    const t = r.type || 'Unknown';
-    counts[t] = (counts[t] || 0) + 1;
-  });
-  const total = list.length || 1;
+function renderTypeTable(list, el, tech) {
+  let counts = {};
+  if (hasRecords()) {
+    list.forEach(r => {
+      const t = r.type || 'Unknown';
+      counts[t] = (counts[t] || 0) + 1;
+    });
+  } else if (tech && DATA.by_tech && DATA.by_tech[tech]) {
+    counts = DATA.by_tech[tech].types || {};
+  } else {
+    counts = DATA.types || {};
+  }
+  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
   const rows = Object.entries(counts).sort((a, b) => b[1] - a[1])
     .map(([t, n]) => `<tr><td>${t}</td><td>${fmt(n)}</td><td>${fmt(n / total * 100, 1)}%</td></tr>`)
     .join('');
@@ -197,6 +237,10 @@ function renderTypeTable(list, el) {
 }
 
 function renderIssueTable(list, el, limit = 80) {
+  if (!hasRecords()) {
+    el.innerHTML = '<div class="empty">Issue log needs full data.json (upload via GitHub). Summary stats above still work.</div>';
+    return;
+  }
   const slice = list.slice().sort((a, b) => (b.created || '').localeCompare(a.created || '')).slice(0, limit);
   if (!slice.length) {
     el.innerHTML = '<div class="empty">No issues in this date range</div>';
@@ -228,6 +272,10 @@ function renderIssueTable(list, el, limit = 80) {
 }
 
 function renderTimeline(list, elId) {
+  if (!hasRecords()) {
+    $(elId).innerHTML = '<div class="empty" style="padding:40px">Timeline needs full data.json</div>';
+    return;
+  }
   const buckets = {};
   list.forEach(r => {
     if (!r.created) return;
@@ -238,68 +286,45 @@ function renderTimeline(list, elId) {
     buckets[m].cost += r.upfront_cost || 0;
   });
   const months = Object.keys(buckets).sort();
-  if (!months.length) {
-    $(elId).innerHTML = '';
-    return;
-  }
+  if (!months.length) { $(elId).innerHTML = ''; return; }
   const totals = months.map(m => buckets[m].total);
   const faults = months.map(m => buckets[m].fault);
   const labels = months.map(m => {
     const [y, mo] = m.split('-');
     return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+mo - 1] + ' ' + y.slice(2);
   });
-
   Plotly.newPlot(elId, [
-    {
-      x: labels, y: totals, name: 'All issues',
-      type: 'bar', marker: { color: '#FF7A45', opacity: 0.85 },
-      hovertemplate: '%{x}<br>%{y} issues<extra></extra>'
-    },
-    {
-      x: labels, y: faults, name: 'Fault',
-      type: 'bar', marker: { color: '#C45C4A', opacity: 0.9 },
-      hovertemplate: '%{x}<br>%{y} fault<extra></extra>'
-    }
+    { x: labels, y: totals, name: 'All issues', type: 'bar', marker: { color: '#FF7A45', opacity: 0.85 }, hovertemplate: '%{x}<br>%{y} issues<extra></extra>' },
+    { x: labels, y: faults, name: 'Fault', type: 'bar', marker: { color: '#C45C4A', opacity: 0.9 }, hovertemplate: '%{x}<br>%{y} fault<extra></extra>' }
   ], {
-    barmode: 'group',
-    margin: { t: 12, r: 12, b: 48, l: 40 },
-    paper_bgcolor: 'transparent',
-    plot_bgcolor: 'transparent',
+    barmode: 'group', margin: { t: 12, r: 12, b: 48, l: 40 },
+    paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
     font: { family: 'Nunito, sans-serif', size: 12, color: '#2D2A26' },
     legend: { orientation: 'h', y: 1.12, x: 0 },
     xaxis: { tickangle: -30, gridcolor: '#EDE4DA' },
-    yaxis: { gridcolor: '#EDE4DA', zeroline: false, title: '' },
-    bargap: 0.25
+    yaxis: { gridcolor: '#EDE4DA', zeroline: false, title: '' }, bargap: 0.25
   }, { responsive: true, displayModeBar: false });
 }
 
-function renderCategoryPie(list, elId) {
-  const counts = {};
-  list.forEach(r => {
-    const c = r.category || 'Unknown';
-    counts[c] = (counts[c] || 0) + 1;
-  });
-  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  if (!entries.length) {
-    $(elId).innerHTML = '';
-    return;
+function renderCategoryPie(list, elId, tech) {
+  let counts = {};
+  if (hasRecords()) {
+    list.forEach(r => { const c = r.category || 'Unknown'; counts[c] = (counts[c] || 0) + 1; });
+  } else if (tech && DATA.by_tech && DATA.by_tech[tech]) {
+    counts = DATA.by_tech[tech].categories || {};
+  } else {
+    counts = DATA.categories || {};
   }
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) { $(elId).innerHTML = ''; return; }
   const palette = ['#FF7A45', '#4ECDC4', '#6B9AC4', '#9B8AA6', '#F4A261', '#7BA38A', '#C45C4A', '#E8A87C', '#85CDCA', '#D4A5A5'];
   Plotly.newPlot(elId, [{
-    labels: entries.map(e => e[0]),
-    values: entries.map(e => e[1]),
-    type: 'pie',
-    hole: 0.55,
-    marker: { colors: palette },
-    textinfo: 'label+value',
-    textposition: 'outside',
-    automargin: true,
+    labels: entries.map(e => e[0]), values: entries.map(e => e[1]), type: 'pie', hole: 0.55,
+    marker: { colors: palette }, textinfo: 'label+value', textposition: 'outside', automargin: true,
     hovertemplate: '%{label}<br>%{value} (%{percent})<extra></extra>'
   }], {
-    margin: { t: 20, r: 20, b: 20, l: 20 },
-    paper_bgcolor: 'transparent',
-    font: { family: 'Nunito, sans-serif', size: 12, color: '#2D2A26' },
-    showlegend: false
+    margin: { t: 20, r: 20, b: 20, l: 20 }, paper_bgcolor: 'transparent',
+    font: { family: 'Nunito, sans-serif', size: 12, color: '#2D2A26' }, showlegend: false
   }, { responsive: true, displayModeBar: false });
 }
 
@@ -307,15 +332,13 @@ function renderTeam() {
   const list = filtered();
   $('page-title').textContent = 'Full Team';
   $('page-sub').textContent = 'All technician issues & returns \u00b7 aggregate view';
-
-  renderKPIs(list, $('kpi-row'));
+  renderKPIs(list, $('kpi-row'), null);
   renderContribution(list, $('contrib-list'));
-  renderCategories(list, $('cat-grid'));
-  renderTypeTable(list, $('type-table'));
+  renderCategories(list, $('cat-grid'), null);
+  renderTypeTable(list, $('type-table'), null);
   renderIssueTable(list, $('issue-table'), 60);
   renderTimeline(list, 'timeline-chart');
-  renderCategoryPie(list, 'cat-pie');
-
+  renderCategoryPie(list, 'cat-pie', null);
   $('team-only').style.display = '';
   $('tech-only').style.display = 'none';
 }
@@ -324,20 +347,17 @@ function renderTech(name) {
   const list = filtered(name);
   $('page-title').textContent = name;
   $('page-sub').textContent = `Personal issues & returns \u00b7 ${name}`;
-
-  renderKPIs(list, $('kpi-row'));
-  renderCategories(list, $('cat-grid'));
-  renderTypeTable(list, $('type-table'));
+  renderKPIs(list, $('kpi-row'), name);
+  renderCategories(list, $('cat-grid'), name);
+  renderTypeTable(list, $('type-table'), name);
   renderIssueTable(list, $('issue-table'), 100);
   renderTimeline(list, 'timeline-chart');
-  renderCategoryPie(list, 'cat-pie');
-
+  renderCategoryPie(list, 'cat-pie', name);
   $('team-only').style.display = 'none';
   $('tech-only').style.display = '';
   $('tech-name-label').textContent = name;
 }
 
-/* ---------- Boot ---------- */
 async function startDashboard() {
   await loadData();
   rangeStart = null;
@@ -345,15 +365,12 @@ async function startDashboard() {
   $('dateStart').value = DATA.date_min || '';
   $('dateEnd').value = DATA.date_max || '';
   $('btnAll').classList.add('active');
-
   $('btnAll').onclick = presetAll;
   $('btn90').onclick = preset90;
   $('btnYTD').onclick = presetYTD;
   $('btnApply').onclick = applyCustomDates;
-
   window.addEventListener('hashchange', onRoute);
   onRoute();
-
   $('app-root').style.display = 'block';
   $('auth-gate').style.display = 'none';
 }
