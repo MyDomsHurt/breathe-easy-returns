@@ -8,7 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=7">
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
+  <link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
 
@@ -23,16 +25,15 @@
       </svg>
     </div>
     <h1>Breathe <span>Easy</span></h1>
-    <p>Returns & Issues dashboard. Sign in with your Google account.</p>
-    <button type="button" id="btn-google" class="btn-google" onclick="window.startDashboard && startDashboard()">
-      Open dashboard
+    <p>Returns & Issues dashboard. Sign in with your authorised Google account.</p>
+    <button type="button" id="btn-google" class="btn-google">
+      Sign in with Google
     </button>
     <div id="auth-error"></div>
   </div>
 </div>
 
 <div id="app-root">
-  <!-- Primary top menu — add more views here -->
   <nav class="topbar" id="topbar">
     <div class="topbar-inner">
       <a class="brand" href="#/returns" aria-label="Breathe-Easy home">
@@ -49,21 +50,16 @@
 
       <div class="top-menu" id="top-menu" role="menubar">
         <button type="button" class="top-menu-btn active" data-view="returns" role="menuitem">Returns</button>
-        <!-- Future views: add buttons here, e.g.
-        <button type="button" class="top-menu-btn" data-view="costs" role="menuitem">Costs</button>
-        -->
       </div>
 
       <div class="topbar-right">
-        <span id="auth-user" class="auth-user">Local preview</span>
-        <button type="button" class="topbar-reload" onclick="location.reload()">Reload</button>
+        <span id="auth-user" class="auth-user">…</span>
       </div>
     </div>
   </nav>
 
   <div class="container">
 
-    <!-- VIEW: Returns -->
     <section id="view-returns" class="app-view" data-view="returns">
 
       <div class="view-header">
@@ -71,7 +67,6 @@
         <p class="view-sub">Technician quality · issues caused and costs</p>
       </div>
 
-      <!-- Secondary: crew filter -->
       <div class="crew-nav" id="nav-links"></div>
 
       <div class="date-card">
@@ -142,7 +137,7 @@
         <div id="cat-pie" style="width:100%; min-height:320px;"></div>
       </div>
 
-      <!-- Issue log kept for later — currently hidden -->
+      <!-- Issue log: shown only when group has canViewIssueLog -->
       <div class="card" id="issue-log-card" style="display:none">
         <h2>Issue log</h2>
         <div class="desc">Most recent issues in range. Phones removed.</div>
@@ -154,19 +149,15 @@
       </div>
     </section>
 
-    <!-- Future views go here, e.g.
-    <section id="view-costs" class="app-view" data-view="costs" hidden>…</section>
-    -->
-
   </div>
 </div>
 
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
+<script src="auth.js?v=8"></script>
 <script>
+  // Local preview only — production waits for Firebase auth.js
   if (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:') {
     startDashboard();
-  } else {
-    document.getElementById('btn-google').addEventListener('click', () => startDashboard());
   }
 </script>
 </body>
