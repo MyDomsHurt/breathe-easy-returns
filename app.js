@@ -1,4 +1,4 @@
-/* Breathe-Easy Returns & Issues — v9 spline timeline + auth groups + official brand */
+/* Breathe-Easy Returns & Issues — v10 weekly/monthly timeline + auth + brand */
 const TECH_ORDER = ['Matthew', 'Tiago', 'Nick', 'Alun', 'Iggi', 'Josh'];
 const TECH_COLORS = { Matthew: '#2563eb', Tiago: '#0ea5e9', Nick: '#22c55e', Alun: '#a855f7', Iggi: '#f97316', Josh: '#8aa0b8' };
 
@@ -380,29 +380,76 @@ function renderIssueTable(list, el, limit = 80) {
   el.innerHTML = `<table><thead><tr><th>Created</th><th>Tech</th><th>Category</th><th>Fault</th><th>Cost</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>${list.length > limit ? `<div class="note">Showing latest ${limit} of ${list.length} issues in range.</div>` : ''}`;
 }
 
+/** Monday-start week key (YYYY-MM-DD of that Monday). */
+function weekStartKey(isoDate) {
+  const d = new Date(isoDate + 'T12:00:00');
+  if (isNaN(d.getTime())) return null;
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+function formatWeekLabel(mondayIso) {
+  const d = new Date(mondayIso + 'T12:00:00');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[d.getMonth()] + ' ' + d.getDate();
+}
+
+function formatMonthLabel(ym) {
+  const [y, mo] = ym.split('-');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+mo - 1] + ' ' + y.slice(2);
+}
+
+/** Span of active filter (or of the plotted records) in days. */
+function timelineSpanDays(list) {
+  let start = rangeStart;
+  let end = rangeEnd;
+  if (!start || !end) {
+    const dates = list.map(r => r.created).filter(Boolean).sort();
+    if (!dates.length) return 999;
+    if (!start) start = dates[0];
+    if (!end) end = dates[dates.length - 1];
+  }
+  const ms = new Date(end + 'T12:00:00') - new Date(start + 'T12:00:00');
+  return Math.max(0, Math.round(ms / 86400000));
+}
+
 function renderTimeline(list, elId) {
   if (!hasRecords()) {
     $(elId).innerHTML = '<div class="empty" style="padding:40px">Loading timeline\u2026</div>';
     return;
   }
+
+  const byWeek = timelineSpanDays(list) < 120;
   const buckets = {};
+
   list.forEach(r => {
     if (!r.created) return;
-    const m = r.created.slice(0, 7);
-    if (!buckets[m]) buckets[m] = { total: 0, fault: 0 };
-    buckets[m].total++;
-    if (r.is_fault) buckets[m].fault++;
+    const key = byWeek ? weekStartKey(r.created) : r.created.slice(0, 7);
+    if (!key) return;
+    if (!buckets[key]) buckets[key] = { total: 0, fault: 0 };
+    buckets[key].total++;
+    if (r.is_fault) buckets[key].fault++;
   });
-  const months = Object.keys(buckets).sort();
-  if (!months.length) { $(elId).innerHTML = ''; return; }
-  const labels = months.map(m => {
-    const [y, mo] = m.split('-');
-    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+mo - 1] + ' ' + y.slice(2);
-  });
+
+  const keys = Object.keys(buckets).sort();
+  if (!keys.length) { $(elId).innerHTML = ''; return; }
+
+  const labels = keys.map(k => byWeek ? formatWeekLabel(k) : formatMonthLabel(k));
+
+  const card = $(elId) && $(elId).closest ? $(elId).closest('.card') : null;
+  const desc = card && card.querySelector('.desc');
+  if (desc) {
+    desc.textContent = byWeek
+      ? 'Weekly volume · all issues vs fault (range under 120 days).'
+      : 'Monthly volume · all issues vs fault.';
+  }
+
   Plotly.newPlot(elId, [
     {
       x: labels,
-      y: months.map(m => buckets[m].total),
+      y: keys.map(k => buckets[k].total),
       name: 'All issues',
       type: 'scatter',
       mode: 'lines+markers',
@@ -412,7 +459,7 @@ function renderTimeline(list, elId) {
     },
     {
       x: labels,
-      y: months.map(m => buckets[m].fault),
+      y: keys.map(k => buckets[k].fault),
       name: 'Fault',
       type: 'scatter',
       mode: 'lines+markers',
