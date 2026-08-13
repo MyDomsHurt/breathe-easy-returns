@@ -1,27 +1,31 @@
-/* Breathe-Easy Returns — official brand tokens
-   Navy #1F3F88 · Blue #0082C8 · Cyan #5ec8f0 · Sky stage */
+/* Breathe-Easy Returns — official brand guidelines
+   Primary #0E4D91 · Mid #2896D1 · Light #69C7EE · Pale #B9E2F6
+   Type: Libre Franklin + Arial
+   Source: Brand guidelines.pdf */
+
 :root {
-  --navy: #1F3F88;
-  --navy-deep: #0f1f4a;
-  --navy-panel: #152a5c;
-  --blue: #0082C8;
-  --blue-bright: #1aa3e0;
-  --cyan: #5ec8f0;
-  --sky: #eef6fc;
-  --soft: #e3f1fb;
+  --navy: #0E4D91;
+  --navy-deep: #0a3a6e;
+  --navy-panel: #0c457f;
+  --blue: #2896D1;
+  --blue-bright: #3aa8e0;
+  --light: #69C7EE;
+  --sky: #B9E2F6;
+  --soft: #e8f5fc;
   --ink: #0c1a33;
-  --ink-2: #2a3d5c;
+  --ink-2: #1a3558;
   --mute: #5a6f8a;
   --faint: #8aa0b8;
   --white: #ffffff;
-  --line: rgba(31, 63, 136, 0.12);
-  --line-strong: rgba(31, 63, 136, 0.2);
+  --line: rgba(14, 77, 145, 0.12);
+  --line-strong: rgba(14, 77, 145, 0.22);
   --green: #0d9488;
   --green-bg: #d1fae5;
   --red: #dc2626;
   --red-bg: #fee2e2;
   --warm: #f59e0b;
   --warm-bg: #fef3c7;
+
   --bg: var(--sky);
   --bg-soft: var(--soft);
   --card: var(--white);
@@ -29,18 +33,21 @@
   --text: var(--ink);
   --muted: var(--mute);
   --accent: var(--blue);
-  --accent-soft: #d6ecf8;
-  --teal: var(--cyan);
-  --teal-soft: #e0f6fc;
+  --accent-soft: #d6eef9;
+  --teal: var(--light);
+  --teal-soft: #e0f4fb;
   --danger: var(--red);
   --danger-soft: var(--red-bg);
-  --shadow: 0 8px 32px rgba(15, 31, 74, 0.10);
-  --shadow-sm: 0 2px 12px rgba(15, 31, 74, 0.06);
+
+  --shadow: 0 8px 32px rgba(14, 77, 145, 0.10);
+  --shadow-sm: 0 2px 12px rgba(14, 77, 145, 0.06);
   --radius: 16px;
   --radius-sm: 12px;
   --radius-lg: 24px;
   --radius-pill: 999px;
-  --font: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font: "Libre Franklin", Arial, system-ui, -apple-system, sans-serif;
+
+  /* Technician identity colours (kept distinct for ranking) */
   --matthew: #2563eb;
   --tiago: #0ea5e9;
   --nick: #22c55e;
@@ -54,9 +61,9 @@
 body {
   font-family: var(--font);
   background:
-    radial-gradient(ellipse 100% 70% at 100% 0%, rgba(0, 130, 200, 0.12), transparent 50%),
-    radial-gradient(ellipse 80% 50% at 0% 100%, rgba(94, 200, 240, 0.10), transparent 45%),
-    linear-gradient(180deg, #f7fbff 0%, #eaf4fc 100%);
+    radial-gradient(ellipse 100% 70% at 100% 0%, rgba(40, 150, 209, 0.14), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 0% 100%, rgba(105, 199, 238, 0.12), transparent 45%),
+    linear-gradient(180deg, #f5fbff 0%, #e8f4fb 100%);
   color: var(--text);
   line-height: 1.55;
   min-height: 100vh;
@@ -70,8 +77,8 @@ body {
   justify-content: center;
   padding: 24px;
   background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0, 130, 200, 0.14), transparent 55%),
-    linear-gradient(180deg, #f7fbff 0%, #e3f1fb 100%);
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(40, 150, 209, 0.16), transparent 55%),
+    linear-gradient(180deg, #f5fbff 0%, #e0f0fa 100%);
 }
 .auth-card {
   background: var(--card);
@@ -169,7 +176,7 @@ header {
   align-items: center;
   justify-content: center;
   margin-bottom: 14px;
-  box-shadow: 0 6px 20px rgba(31, 63, 136, 0.28);
+  box-shadow: 0 6px 20px rgba(14, 77, 145, 0.28);
 }
 .logo-mark svg { width: 26px; height: 26px; }
 h1 {
@@ -215,7 +222,7 @@ h1 span { color: var(--blue); }
   background: var(--navy);
   color: #fff;
   border-color: var(--navy);
-  box-shadow: 0 6px 18px rgba(31, 63, 136, 0.28);
+  box-shadow: 0 6px 18px rgba(14, 77, 145, 0.28);
 }
 
 .date-card {
@@ -261,7 +268,7 @@ h1 span { color: var(--blue); }
   background: var(--navy);
   border-color: var(--navy);
   color: #fff;
-  box-shadow: 0 2px 10px rgba(31, 63, 136, 0.28);
+  box-shadow: 0 2px 10px rgba(14, 77, 145, 0.28);
 }
 .month-row {
   display: flex;
@@ -403,7 +410,10 @@ h1 span { color: var(--blue); }
   gap: 10px;
   align-items: center;
 }
-.contrib-name { font-weight: 700; font-size: 0.9rem; }
+.contrib-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
 .contrib-bar-track {
   height: 12px;
   background: var(--soft);
@@ -441,6 +451,7 @@ h1 span { color: var(--blue); }
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  border: 1px solid transparent;
 }
 .cat-chip .cat-name {
   font-weight: 700;
@@ -467,52 +478,34 @@ th:first-child, td:first-child { text-align: left; }
 th {
   color: var(--mute);
   font-weight: 700;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+td { color: var(--ink); font-weight: 500; }
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: var(--soft); }
-.badge {
-  display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--soft);
-  color: var(--mute);
-}
-.badge.fault { background: var(--red-bg); color: var(--red); }
-.badge.nofault { background: var(--green-bg); color: var(--green); }
-.badge.unknown { background: var(--soft); color: var(--mute); }
 
-.chart { width: 100%; height: 340px; min-height: 260px; }
-.chart-sm { width: 100%; height: 280px; min-height: 220px; }
+.chart { width: 100%; min-height: 280px; }
 
 .two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  gap: 16px;
+  margin-bottom: 18px;
 }
-@media (max-width: 800px) {
+@media (max-width: 720px) {
   .two-col { grid-template-columns: 1fr; }
 }
 
-.empty {
-  text-align: center;
-  padding: 36px 16px;
-  color: var(--mute);
-  font-weight: 600;
-}
-
 .note {
-  font-size: 0.8rem;
-  color: var(--mute);
+  font-size: 0.78rem;
+  color: var(--faint);
+  text-align: center;
+  margin-top: 8px;
   font-weight: 500;
-  margin-top: 12px;
-  line-height: 1.45;
 }
 
+/* Technician name colour classes */
 .t-Matthew { color: var(--matthew); }
 .t-Tiago { color: var(--tiago); }
 .t-Nick { color: var(--nick); }
@@ -533,7 +526,9 @@ tr:hover td { background: var(--soft); }
   .nav-btn { padding: 9px 14px; font-size: 0.8rem; }
   .kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; }
   .kpi .value { font-size: 1.35rem; }
-  .contrib-row { grid-template-columns: 72px 1fr 52px; }
+  .contrib-row {
+    grid-template-columns: 72px 1fr 52px;
+  }
   .contrib-cost { display: none; }
   .card { padding: 16px 14px; }
   table { font-size: 0.8rem; }
