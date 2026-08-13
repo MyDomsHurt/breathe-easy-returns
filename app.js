@@ -1,4 +1,4 @@
-/* Breathe-Easy Returns & Issues — v3 full records via gzip */
+/* Breathe-Easy Returns & Issues — v4 period + month date module */
 const TECH_ORDER = ['Matthew', 'Tiago', 'Nick', 'Alun', 'Iggi', 'Josh'];
 const TECH_COLORS = { Matthew: '#1481c3', Tiago: '#59bcee', Nick: '#16a34a', Alun: '#7c5cbf', Iggi: '#fb8e28', Josh: '#8A8178' };
 
@@ -26,7 +26,6 @@ async function loadData() {
   const res = await fetch('data.json');
   DATA = await res.json();
   if (!DATA.records) DATA.records = [];
-  // Full records: two gzip+base64 parts
   try {
     const [a, b] = await Promise.all([
       fetch('data-records-a.b64').then(r => r.ok ? r.text() : ''),
@@ -37,7 +36,6 @@ async function loadData() {
       if (Array.isArray(records) && records.length) DATA.records = records;
     }
   } catch (e) { console.warn('records load', e); }
-  // Legacy plain JSON fallback
   if (!DATA.records.length) {
     try {
       const res2 = await fetch('data-records.json');
@@ -63,30 +61,101 @@ function filtered(tech = null) {
 }
 function hasRecords() { return (DATA.records || []).length > 0; }
 
-function setRange(start, end, activeBtn) {
+function clearDateActive() {
+  document.querySelectorAll('.period-btn, .month-btn').forEach(b => b.classList.remove('active'));
+}
+function setRange(start, end, activeId) {
   rangeStart = start || null;
   rangeEnd = end || null;
-  document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
-  if (activeBtn) $(activeBtn)?.classList.add('active');
-  if (start) $('dateStart').value = start;
-  else if (start === null) $('dateStart').value = DATA.date_min || '';
-  if (end) $('dateEnd').value = end;
-  else if (end === null) $('dateEnd').value = DATA.date_max || '';
+  clearDateActive();
+  if (activeId) $(activeId)?.classList.add('active');
+  if ($('dateStart')) {
+    $('dateStart').value = start || DATA.date_min || '';
+    $('dateEnd').value = end || DATA.date_max || '';
+  }
+  updateDateDesc();
   render();
 }
-function applyCustomDates() { setRange($('dateStart').value || null, $('dateEnd').value || null, null); }
-function presetAll() {
-  setRange(null, null, 'btnAll');
-  $('dateStart').value = DATA.date_min || '';
-  $('dateEnd').value = DATA.date_max || '';
+function updateDateDesc() {
+  const el = $('date-desc');
+  if (!el) return;
+  if (!rangeStart && !rangeEnd) {
+    el.textContent = 'All issues · ' + (DATA.date_min || '?') + ' → ' + (DATA.date_max || '?');
+  } else {
+    el.textContent = 'Showing ' + (rangeStart || '…') + ' → ' + (rangeEnd || '…');
+  }
 }
-function preset90() {
+function lastDayOfMonth(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m, 0);
+  return d.toISOString().slice(0, 10);
+}
+function applyCustomDates() {
+  const s = $('dateStart').value || null;
+  const e = $('dateEnd').value || null;
+  setRange(s, e, 'btnCustom');
+  $('custom-row').hidden = false;
+}
+function presetAll() {
+  $('custom-row').hidden = true;
+  setRange(null, null, 'btnAll');
+}
+function presetDays(n, btnId) {
+  $('custom-row').hidden = true;
   const end = DATA.date_max || new Date().toISOString().slice(0, 10);
   const d = new Date(end + 'T12:00:00');
-  d.setDate(d.getDate() - 90);
-  setRange(d.toISOString().slice(0, 10), end, 'btn90');
+  d.setDate(d.getDate() - n);
+  setRange(d.toISOString().slice(0, 10), end, btnId);
 }
-function presetYTD() { setRange('2026-01-01', DATA.date_max || '2026-12-31', 'btnYTD'); }
+function presetYTD() {
+  $('custom-row').hidden = true;
+  setRange('2026-01-01', DATA.date_max || '2026-12-31', 'btnYTD');
+}
+function presetMonth(ym) {
+  $('custom-row').hidden = true;
+  setRange(ym + '-01', lastDayOfMonth(ym), 'm-' + ym);
+}
+function toggleCustom() {
+  const row = $('custom-row');
+  const open = row.hidden;
+  row.hidden = !open;
+  clearDateActive();
+  $('btnCustom').classList.add('active');
+  if (open) {
+    $('dateStart').value = rangeStart || DATA.date_min || '';
+    $('dateEnd').value = rangeEnd || DATA.date_max || '';
+  }
+}
+function buildMonthChips() {
+  const row = $('month-row');
+  if (!row) return;
+  const months = new Set();
+  (DATA.records || []).forEach(r => {
+    if (r.created && r.created.length >= 7) months.add(r.created.slice(0, 7));
+  });
+  if (!months.size && DATA.date_min && DATA.date_max) {
+    let cur = DATA.date_min.slice(0, 7);
+    const end = DATA.date_max.slice(0, 7);
+    while (cur <= end) {
+      months.add(cur);
+      const [y, m] = cur.split('-').map(Number);
+      const nm = m === 12 ? 1 : m + 1;
+      const ny = m === 12 ? y + 1 : y;
+      cur = ny + '-' + String(nm).padStart(2, '0');
+    }
+  }
+  const labels = { '01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun',
+                   '07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec' };
+  const sorted = [...months].sort();
+  row.innerHTML = sorted.map(ym => {
+    const [y, m] = ym.split('-');
+    const short = labels[m] + (y === '2025' ? " '25" : (y === '2026' ? '' : ' ' + y.slice(2)));
+    return `<button type="button" class="month-btn" id="m-${ym}" data-month="${ym}">${short}</button>`;
+  }).join('');
+  row.querySelectorAll('.month-btn').forEach(btn => {
+    btn.onclick = () => presetMonth(btn.dataset.month);
+  });
+}
 
 function setNav(route) {
   activeRoute = route;
@@ -207,7 +276,7 @@ function renderIssueTable(list, el, limit = 80) {
       <td>${r.category || '\u2014'}</td>
       <td>${badge}</td>
       <td>${fmtMoney(r.upfront_cost)}</td>
-      <td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r.description || '').replace(/"/g, '&quot;')}">${r.description || '\u2014'}</td></tr>`;
+      <td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r.description || '').replace(/"/g, '"')}">${r.description || '\u2014'}</td></tr>`;
   }).join('');
   el.innerHTML = `<table><thead><tr><th>Created</th><th>Tech</th><th>Category</th><th>Fault</th><th>Cost</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>${list.length > limit ? `<div class="note">Showing latest ${limit} of ${list.length} issues in range.</div>` : ''}`;
 }
@@ -313,13 +382,19 @@ function renderTech(name) {
 async function startDashboard() {
   await loadData();
   rangeStart = null; rangeEnd = null;
-  $('dateStart').value = DATA.date_min || '';
-  $('dateEnd').value = DATA.date_max || '';
-  $('btnAll').classList.add('active');
+  buildMonthChips();
   $('btnAll').onclick = presetAll;
-  $('btn90').onclick = preset90;
+  $('btn30').onclick = () => presetDays(30, 'btn30');
+  $('btn90').onclick = () => presetDays(90, 'btn90');
   $('btnYTD').onclick = presetYTD;
+  $('btnCustom').onclick = toggleCustom;
   $('btnApply').onclick = applyCustomDates;
+  if ($('dateStart')) {
+    $('dateStart').value = DATA.date_min || '';
+    $('dateEnd').value = DATA.date_max || '';
+  }
+  $('btnAll').classList.add('active');
+  updateDateDesc();
   window.addEventListener('hashchange', onRoute);
   onRoute();
   $('app-root').style.display = 'block';
