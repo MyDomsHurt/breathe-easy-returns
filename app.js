@@ -1,6 +1,6 @@
-/* Breathe-Easy Returns & Issues — v4 period + month date module */
+/* Breathe-Easy Returns & Issues — v5 brand navy/sky + period date module */
 const TECH_ORDER = ['Matthew', 'Tiago', 'Nick', 'Alun', 'Iggi', 'Josh'];
-const TECH_COLORS = { Matthew: '#1481c3', Tiago: '#59bcee', Nick: '#16a34a', Alun: '#7c5cbf', Iggi: '#fb8e28', Josh: '#8A8178' };
+const TECH_COLORS = { Matthew: '#2563eb', Tiago: '#0ea5e9', Nick: '#22c55e', Alun: '#a855f7', Iggi: '#f97316', Josh: '#8aa0b8' };
 
 let DATA = null, rangeStart = null, rangeEnd = null, activeRoute = 'team';
 
@@ -301,15 +301,15 @@ function renderTimeline(list, elId) {
     return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+mo - 1] + ' ' + y.slice(2);
   });
   Plotly.newPlot(elId, [
-    { x: labels, y: months.map(m => buckets[m].total), name: 'All issues', type: 'bar', marker: { color: '#FF7A45', opacity: 0.85 }, hovertemplate: '%{x}<br>%{y} issues<extra></extra>' },
-    { x: labels, y: months.map(m => buckets[m].fault), name: 'Fault', type: 'bar', marker: { color: '#C45C4A', opacity: 0.9 }, hovertemplate: '%{x}<br>%{y} fault<extra></extra>' }
+    { x: labels, y: months.map(m => buckets[m].total), name: 'All issues', type: 'bar', marker: { color: '#0082C8', opacity: 0.88 }, hovertemplate: '%{x}<br>%{y} issues<extra></extra>' },
+    { x: labels, y: months.map(m => buckets[m].fault), name: 'Fault', type: 'bar', marker: { color: '#dc2626', opacity: 0.88 }, hovertemplate: '%{x}<br>%{y} fault<extra></extra>' }
   ], {
     barmode: 'group', margin: { t: 12, r: 12, b: 48, l: 40 },
     paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-    font: { family: 'Nunito, sans-serif', size: 12, color: '#2D2A26' },
+    font: { family: 'Plus Jakarta Sans, sans-serif', size: 12, color: '#0c1a33' },
     legend: { orientation: 'h', y: 1.12, x: 0 },
-    xaxis: { tickangle: -30, gridcolor: '#EDE4DA' },
-    yaxis: { gridcolor: '#EDE4DA', zeroline: false }, bargap: 0.25
+    xaxis: { tickangle: -30, gridcolor: 'rgba(31,63,136,0.12)' },
+    yaxis: { gridcolor: 'rgba(31,63,136,0.12)', zeroline: false }, bargap: 0.25
   }, { responsive: true, displayModeBar: false });
 }
 
@@ -326,10 +326,10 @@ function renderCategoryShare(list, elId, tech) {
   const pcts = values.map(v => (v / total * 100));
   const colors = values.map((_, i) => {
     const rank = entries.length - 1 - i;
-    if (rank === 0) return '#FF7A45';
-    if (rank === 1) return '#F4A261';
-    if (rank === 2) return '#4ECDC4';
-    return '#C4B5A8';
+    if (rank === 0) return '#0082C8';
+    if (rank === 1) return '#1aa3e0';
+    if (rank === 2) return '#5ec8f0';
+    return '#8aa0b8';
   });
   const height = Math.max(280, entries.length * 28 + 40);
   Plotly.newPlot(elId, [{
@@ -337,15 +337,15 @@ function renderCategoryShare(list, elId, tech) {
     marker: { color: colors, line: { width: 0 } },
     text: values.map((v, i) => v + '  (' + pcts[i].toFixed(0) + '%)'),
     textposition: 'outside',
-    textfont: { family: 'Nunito, sans-serif', size: 12, color: '#2D2A26' },
+    textfont: { family: 'Plus Jakarta Sans, sans-serif', size: 12, color: '#0c1a33' },
     hovertemplate: '<b>%{y}</b><br>%{x} issues (%{customdata:.0f}%)<extra></extra>',
     customdata: pcts, cliponaxis: false
   }], {
     margin: { t: 8, r: 80, b: 24, l: 130 }, height: height,
     paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-    font: { family: 'Nunito, sans-serif', size: 12, color: '#2D2A26' },
-    xaxis: { gridcolor: '#EDE4DA', zeroline: false, tickfont: { size: 11, color: '#8A8178' } },
-    yaxis: { automargin: true, tickfont: { size: 12, color: '#2D2A26' }, categoryorder: 'array', categoryarray: labels },
+    font: { family: 'Plus Jakarta Sans, sans-serif', size: 12, color: '#0c1a33' },
+    xaxis: { gridcolor: 'rgba(31,63,136,0.12)', zeroline: false, tickfont: { size: 11, color: '#5a6f8a' } },
+    yaxis: { automargin: true, tickfont: { size: 12, color: '#0c1a33' }, categoryorder: 'array', categoryarray: labels },
     bargap: 0.35
   }, { responsive: true, displayModeBar: false });
 }
