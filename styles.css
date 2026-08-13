@@ -223,12 +223,65 @@ h1 span { color: var(--accent); }
   font-weight: 500;
   margin-bottom: 14px;
 }
-.date-row {
+.period-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.period-btn {
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.period-btn:hover { border-color: var(--accent); color: var(--accent); }
+.period-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(255, 122, 69, 0.28);
+}
+.month-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.month-btn {
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 11px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.month-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.month-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.custom-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   align-items: flex-end;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
 }
+.custom-row[hidden] { display: none !important; }
 .date-field {
   display: flex;
   flex-direction: column;
@@ -255,20 +308,15 @@ h1 span { color: var(--accent); }
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 700;
-  padding: 9px 14px;
+  padding: 9px 16px;
   border-radius: var(--radius-pill);
-  border: 1.5px solid var(--border);
-  background: var(--card);
-  color: var(--muted);
+  border: 1.5px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
   cursor: pointer;
   transition: all 0.15s;
 }
-.date-btn:hover { border-color: var(--accent); color: var(--accent); }
-.date-btn.active {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
-}
+.date-btn:hover { filter: brightness(1.05); }
 
 /* ---------- KPIs ---------- */
 .kpi-row {
