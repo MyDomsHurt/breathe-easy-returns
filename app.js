@@ -1,4 +1,4 @@
-/* Breathe-Easy Returns & Issues — v2 horizontal category bars */
+/* Breathe-Easy Returns & Issues — v3 full records via gzip */
 const TECH_ORDER = ['Matthew', 'Tiago', 'Nick', 'Alun', 'Iggi', 'Josh'];
 const TECH_COLORS = { Matthew: '#1481c3', Tiago: '#59bcee', Nick: '#16a34a', Alun: '#7c5cbf', Iggi: '#fb8e28', Josh: '#8A8178' };
 
@@ -14,17 +14,39 @@ function fmtMoney(n) {
   return '$' + Number(n).toLocaleString('en-HK', { maximumFractionDigits: 0 });
 }
 
+async function gunzipB64(b64) {
+  const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const ds = new DecompressionStream('gzip');
+  const stream = new Blob([bin]).stream().pipeThrough(ds);
+  const buf = await new Response(stream).arrayBuffer();
+  return JSON.parse(new TextDecoder().decode(buf));
+}
+
 async function loadData() {
   const res = await fetch('data.json');
   DATA = await res.json();
   if (!DATA.records) DATA.records = [];
+  // Full records: two gzip+base64 parts
   try {
-    const res2 = await fetch('data-records.json');
-    if (res2.ok) {
-      const extra = await res2.json();
-      if (extra.records && extra.records.length) DATA.records = (DATA.records || []).concat(extra.records);
+    const [a, b] = await Promise.all([
+      fetch('data-records-a.b64').then(r => r.ok ? r.text() : ''),
+      fetch('data-records-b.b64').then(r => r.ok ? r.text() : '')
+    ]);
+    if (a && b) {
+      const records = await gunzipB64((a + b).trim());
+      if (Array.isArray(records) && records.length) DATA.records = records;
     }
-  } catch (e) {}
+  } catch (e) { console.warn('records load', e); }
+  // Legacy plain JSON fallback
+  if (!DATA.records.length) {
+    try {
+      const res2 = await fetch('data-records.json');
+      if (res2.ok) {
+        const extra = await res2.json();
+        if (extra.records && extra.records.length) DATA.records = extra.records;
+      }
+    } catch (e) {}
+  }
 }
 
 function inRange(rec) {
@@ -171,7 +193,7 @@ function renderTypeTable(list, el, tech) {
 
 function renderIssueTable(list, el, limit = 80) {
   if (!hasRecords()) {
-    el.innerHTML = '<div class="empty">Issue log needs full data.json (upload via GitHub). Summary stats above still work.</div>';
+    el.innerHTML = '<div class="empty">Loading issue records\u2026</div>';
     return;
   }
   const slice = list.slice().sort((a, b) => (b.created || '').localeCompare(a.created || '')).slice(0, limit);
@@ -192,7 +214,7 @@ function renderIssueTable(list, el, limit = 80) {
 
 function renderTimeline(list, elId) {
   if (!hasRecords()) {
-    $(elId).innerHTML = '<div class="empty" style="padding:40px">Timeline needs full data.json</div>';
+    $(elId).innerHTML = '<div class="empty" style="padding:40px">Loading timeline\u2026</div>';
     return;
   }
   const buckets = {};
@@ -222,16 +244,13 @@ function renderTimeline(list, elId) {
   }, { responsive: true, displayModeBar: false });
 }
 
-/** Category share — horizontal ranked bars (readable with many categories) */
 function renderCategoryShare(list, elId, tech) {
   let counts = {};
   if (hasRecords()) list.forEach(r => { const c = r.category || 'Unknown'; counts[c] = (counts[c] || 0) + 1; });
   else if (tech && DATA.by_tech && DATA.by_tech[tech]) counts = DATA.by_tech[tech].categories || {};
   else counts = DATA.categories || {};
-
   const entries = Object.entries(counts).sort((a, b) => a[1] - b[1]);
   if (!entries.length) { $(elId).innerHTML = ''; return; }
-
   const total = entries.reduce((s, e) => s + e[1], 0) || 1;
   const labels = entries.map(e => e[0]);
   const values = entries.map(e => e[1]);
@@ -244,7 +263,6 @@ function renderCategoryShare(list, elId, tech) {
     return '#C4B5A8';
   });
   const height = Math.max(280, entries.length * 28 + 40);
-
   Plotly.newPlot(elId, [{
     y: labels, x: values, type: 'bar', orientation: 'h',
     marker: { color: colors, line: { width: 0 } },
@@ -254,8 +272,7 @@ function renderCategoryShare(list, elId, tech) {
     hovertemplate: '<b>%{y}</b><br>%{x} issues (%{customdata:.0f}%)<extra></extra>',
     customdata: pcts, cliponaxis: false
   }], {
-    margin: { t: 8, r: 80, b: 24, l: 130 },
-    height: height,
+    margin: { t: 8, r: 80, b: 24, l: 130 }, height: height,
     paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
     font: { family: 'Nunito, sans-serif', size: 12, color: '#2D2A26' },
     xaxis: { gridcolor: '#EDE4DA', zeroline: false, tickfont: { size: 11, color: '#8A8178' } },
