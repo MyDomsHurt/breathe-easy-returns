@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Breathe Easy · Returns & Issues</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+
+<!-- Auth gate (Firebase wired later; local preview auto-starts) -->
+<div id="auth-gate">
+  <div class="auth-card">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="26" height="26">
+        <path d="M12 3c.5 2 1.5 3.5 3 4.5-1.5 1-2.5 2.5-3 4.5-.5-2-1.5-3.5-3-4.5 1.5-1 2.5-2.5 3-4.5z"/>
+        <path d="M12 12c.4 1.6 1.2 2.8 2.4 3.6-1.2.8-2 2-2.4 3.6-.4-1.6-1.2-2.8-2.4-3.6 1.2-.8 2-2 2.4-3.6z"/>
+      </svg>
+    </div>
+    <h1>Breathe <span>Easy</span></h1>
+    <p>Returns &amp; Issues dashboard. Sign in with your Google account.</p>
+    <button type="button" id="btn-google" class="btn-google" onclick="window.startDashboard && startDashboard()">
+      Open dashboard
+    </button>
+    <div id="auth-error"></div>
+  </div>
+</div>
+
+<div id="app-root">
+  <div class="container">
+    <div class="auth-bar">
+      <span id="auth-user">Local preview</span>
+      <button type="button" onclick="location.reload()">Reload</button>
+    </div>
+
+    <header>
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3c.5 2 1.5 3.5 3 4.5-1.5 1-2.5 2.5-3 4.5-.5-2-1.5-3.5-3-4.5 1.5-1 2.5-2.5 3-4.5z"/>
+          <path d="M12 12c.4 1.6 1.2 2.8 2.4 3.6-1.2.8-2 2-2.4 3.6-.4-1.6-1.2-2.8-2.4-3.6 1.2-.8 2-2 2.4-3.6z"/>
+        </svg>
+      </div>
+      <h1>Breathe <span>Easy</span></h1>
+      <div class="subtitle">Returns &amp; Issues · technician quality</div>
+    </header>
+
+    <div class="nav" id="nav-links"></div>
+
+    <!-- Date range (global) -->
+    <div class="date-card">
+      <h2>Date range</h2>
+      <div class="desc">Filter by issue created date.</div>
+      <div class="date-row">
+        <div class="date-field"><label>From</label><input type="date" id="dateStart" /></div>
+        <div class="date-field"><label>To</label><input type="date" id="dateEnd" /></div>
+        <button class="date-btn" id="btnApply">Apply</button>
+        <button class="date-btn" id="btnAll">All time</button>
+        <button class="date-btn" id="btn90">Last 90 days</button>
+        <button class="date-btn" id="btnYTD">2026 YTD</button>
+      </div>
+    </div>
+
+    <!-- Page header -->
+    <div style="margin-bottom:16px">
+      <h2 id="page-title" style="font-size:1.25rem;font-weight:800;letter-spacing:-0.02em">Full Team</h2>
+      <div id="page-sub" class="subtitle" style="font-size:0.9rem">All technician issues &amp; returns</div>
+    </div>
+
+    <!-- KPIs — stats first -->
+    <div class="kpi-row" id="kpi-row"></div>
+
+    <!-- Team contribution (team page only) -->
+    <div id="team-only">
+      <div class="card">
+        <h2>Contribution by technician</h2>
+        <div class="desc">Issue count and upfront cost in the selected range. Ranked by volume.</div>
+        <div class="contrib-list" id="contrib-list"></div>
+      </div>
+    </div>
+
+    <div id="tech-only" style="display:none">
+      <div class="card">
+        <h2><span id="tech-name-label"></span> · issue mix</h2>
+        <div class="desc">Category and type breakdown for this technician only.</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h2>By category</h2>
+        <div class="desc">Primary issue category.</div>
+        <div class="cat-grid" id="cat-grid"></div>
+      </div>
+      <div class="card">
+        <h2>By type</h2>
+        <div class="desc">Return Visit / Checklist / Fault status.</div>
+        <div id="type-table"></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h2>Issues over time</h2>
+        <div class="desc">Monthly volume · all issues vs fault.</div>
+        <div id="timeline-chart" class="chart"></div>
+      </div>
+      <div class="card">
+        <h2>Category share</h2>
+        <div class="desc">Distribution in selected range.</div>
+        <div id="cat-pie" class="chart-sm"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Issue log</h2>
+      <div class="desc">Most recent issues in range. Phones removed.</div>
+      <div id="issue-table" style="overflow-x:auto"></div>
+    </div>
+
+    <div class="note">
+      Source: Technicians Returns &amp; Costs · cleaned 2026-08-13 · 205 records · phones removed for privacy.
+    </div>
+  </div>
+</div>
+
+<script src="app.js?v=1"></script>
+<script>
+  // Local preview: auto-open after short delay so structure is visible
+  // Production: replace with Firebase auth gate calling startDashboard()
+  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:') {
+    startDashboard();
+  } else {
+    // Still allow open button for GitHub Pages until auth is wired
+    document.getElementById('btn-google').addEventListener('click', () => startDashboard());
+  }
+</script>
+</body>
+</html>
