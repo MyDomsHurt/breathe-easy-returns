@@ -1,4 +1,4 @@
-/* Breathe-Easy Returns & Issues — v8 auth groups + official brand */
+/* Breathe-Easy Returns & Issues — v9 spline timeline + auth groups + official brand */
 const TECH_ORDER = ['Matthew', 'Tiago', 'Nick', 'Alun', 'Iggi', 'Josh'];
 const TECH_COLORS = { Matthew: '#2563eb', Tiago: '#0ea5e9', Nick: '#22c55e', Alun: '#a855f7', Iggi: '#f97316', Josh: '#8aa0b8' };
 
@@ -400,15 +400,33 @@ function renderTimeline(list, elId) {
     return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+mo - 1] + ' ' + y.slice(2);
   });
   Plotly.newPlot(elId, [
-    { x: labels, y: months.map(m => buckets[m].total), name: 'All issues', type: 'bar', marker: { color: '#2896D1', opacity: 0.90 }, hovertemplate: '%{x}<br>%{y} issues<extra></extra>' },
-    { x: labels, y: months.map(m => buckets[m].fault), name: 'Fault', type: 'bar', marker: { color: '#dc2626', opacity: 0.88 }, hovertemplate: '%{x}<br>%{y} fault<extra></extra>' }
+    {
+      x: labels,
+      y: months.map(m => buckets[m].total),
+      name: 'All issues',
+      type: 'scatter',
+      mode: 'lines+markers',
+      line: { color: '#2896D1', width: 2.5, shape: 'spline', smoothing: 0.7 },
+      marker: { color: '#0E4D91', size: 8 },
+      hovertemplate: '%{x}<br>%{y} issues<extra></extra>'
+    },
+    {
+      x: labels,
+      y: months.map(m => buckets[m].fault),
+      name: 'Fault',
+      type: 'scatter',
+      mode: 'lines+markers',
+      line: { color: '#dc2626', width: 2.5, shape: 'spline', smoothing: 0.7 },
+      marker: { color: '#b91c1c', size: 8 },
+      hovertemplate: '%{x}<br>%{y} fault<extra></extra>'
+    }
   ], {
-    barmode: 'group', margin: { t: 12, r: 12, b: 48, l: 40 },
+    margin: { t: 12, r: 12, b: 48, l: 40 },
     paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
     font: { family: 'Libre Franklin, Arial, sans-serif', size: 12, color: '#0c1a33' },
     legend: { orientation: 'h', y: 1.12, x: 0 },
     xaxis: { tickangle: -30, gridcolor: 'rgba(14,77,145,0.12)' },
-    yaxis: { gridcolor: 'rgba(14,77,145,0.12)', zeroline: false }, bargap: 0.25
+    yaxis: { gridcolor: 'rgba(14,77,145,0.12)', zeroline: false, rangemode: 'tozero' }
   }, { responsive: true, displayModeBar: false });
 }
 
